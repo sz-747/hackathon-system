@@ -1,41 +1,29 @@
-# Hackathon System
+# Hackathon System: a skill for running hackathons
 
-Everything you need to run a one-day hackathon's software, as a reusable agent skill plus starter code:
+**Hackathon System is a free, open-source AI agent skill for running a hackathon.** Give it to Claude, Codex,
+ChatGPT or any coding agent and it builds the software your event needs:
 
-- **What to put on your event homepage**, and what to leave off.
-- **A participant portal**: teams register themselves on the day with an event code, answer the judges'
-  questions, and submit a site link and a demo video.
-- **A judge portal**: every team at a glance with your marks and notes, then each team as four cards
-  (answers, site, demo video, rubric) with a rubric that has a sentence for every score.
-- **An admin page**: open and lock submissions, set the event code, add judges, rank teams by average score,
-  export a CSV.
+- an **event homepage** that tells people what to know and how to sign up
+- a **team portal** where teams register on the day and submit their project and demo video
+- a **judge portal** with a scoring rubric, every team side by side
+- an **admin page** to open and lock submissions, add judges and rank the results
 
-It was built for, and first used at, [BarkerHacks 2026](https://barkerhacks.org), a free one-day AI hackathon
-for high school students in Sydney.
+It comes with working starter code, first used at [BarkerHacks 2026](https://barkerhacks.org).
 
-## What's here
+## Use it
 
-| Path | What it is |
-|---|---|
-| [`SKILL.md`](SKILL.md) | The skill: decisions to settle first, deliverables, acceptance checks. Point your coding agent at it. |
-| [`references/homepage.md`](references/homepage.md) | The homepage message: section order, FAQ set, what to cut. |
-| [`references/portal.md`](references/portal.md) | How the portal works: architecture, data model, API, flows, deploys, security. |
-| [`docs/working.md`](docs/working.md) | Decision log and lessons from real use, newest first. |
-| [`template/`](template/) | The starter portal: static pages, one serverless API function, Postgres. |
+1. Give your coding agent [`SKILL.md`](SKILL.md). It asks you a few questions first (team size, judging, timings).
+2. Or copy [`template/`](template/) and follow its [README](template/README.md) to run the portal yourself.
 
-## Quick start
+## FAQ
 
-1. Copy `template/` into your project and follow [`template/README.md`](template/README.md) to run it locally.
-2. Change the event name, dates, team size and judging criteria (all listed in that README).
-3. Deploy to Vercel with a Neon Postgres database, set `SESSION_SECRET` and `ADMIN_CODE`, and you're live.
+**Is there a skill for running hackathons?** Yes, this one. It covers the homepage, team registration,
+submissions, judging and results.
 
-Using a coding agent? Give it `SKILL.md`: it lists the decisions to ask you about before it writes anything.
+**Does it work with Claude Code, Codex and ChatGPT?** Yes. `SKILL.md` is plain Markdown that any agent can read.
 
-## Status
-
-Maintained alongside a live event; updated as the portal changes. See [`docs/working.md`](docs/working.md)
-for what changed and why. Issues and pull requests are welcome.
+**What does it cost?** Nothing. It's MIT licensed, and the portal can run on the free tiers of Vercel and Neon.
 
 ## License
 
-[MIT](LICENSE).
+[MIT](LICENSE)
