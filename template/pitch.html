@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0a0d1b">
+<title>Team answers · HackDay 2026</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Caveat:wght@500;600&display=swap">
+<link rel="stylesheet" href="/assets/portal.css">
+<script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
+<script defer src="/_vercel/insights/script.js"></script>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <filter id="wobble" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="0.012" numOctaves="2" seed="7" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="7" xChannelSelector="R" yChannelSelector="G"/></filter>
+</defs></svg>
+<div class="sky" aria-hidden="true"><div class="nebula"></div><canvas></canvas><div class="vignette"></div></div>
+<header class="wrap top">
+  <a class="wordmark" href="/">Hack<em>Day</em></a>
+  <span class="where">team answers</span>
+  <span></span>
+</header>
+<main class="wrap" id="out" style="margin-top:20px"><p class="lead">Loading&hellip;</p></main>
+<script src="/assets/portal.js"></script>
+<script>
+(async function () {
+  var out = document.getElementById('out'), q = new URLSearchParams(location.search);
+  BH.wireDecks(out);
+  // Arrow keys move the deck when the page shows one team.
+  document.addEventListener('keydown', function (e) {
+    var decks = out.querySelectorAll('.deck'); if (decks.length !== 1 || BH.typing(e)) return;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') BH.deckStep(decks[0], e.key === 'ArrowRight' ? 1 : -1);
+  });
+  try {
+    var r = await BH.api('GET', 'pitch?' + (q.get('all') === '1' ? 'all=1' : 'team=' + encodeURIComponent(q.get('team') || '')));
+    out.innerHTML = r.teams.length ? r.teams.map(BH.deck).join('') : '<p class="lead">No teams yet.</p>';
+    if (r.teams.length === 1) document.title = (r.teams[0].pitch && r.teams[0].pitch.app_name || r.teams[0].team.name || 'Team answers') + ' · HackDay 2026';
+  } catch (e) {
+    out.innerHTML = '<p class="lead">' + BH.esc(e.status === 401 ? 'Sign in first.' : e.message) + '</p><p style="margin-top:16px"><a class="btn" href="/portal">Team portal</a> <a class="btn" href="/judge">Judge portal</a></p>';
+  }
+})();
+</script>
+</body>
+</html>

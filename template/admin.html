@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0d1b">
+<title>Admin · HackDay 2026</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Caveat:wght@500;600&display=swap">
+<link rel="stylesheet" href="/assets/portal.css">
+<style>
+  .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 26px 0 30px; }
+  .tabs button { padding: 8px 14px; border-radius: 9999px; border: 1px solid var(--hairline); background: rgba(16,20,42,.7); color: var(--ink-2); cursor: pointer; font-size: 14px; }
+  .tabs button.on { color: #fff; border-color: var(--red); background: rgba(224,32,46,.18); }
+  .force { display: flex; flex-wrap: wrap; gap: 8px; }
+  .force .btn.on { outline: 2px solid var(--red); outline-offset: 2px; }
+  textarea.raw { font-family: var(--mono); font-size: 12.5px; min-height: 140px; }
+  .codes td .mono { user-select: all; }
+  .kpi { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-top: 4px; }
+  .kpi div { padding: 14px 16px; border: 1px solid var(--hairline); background: rgba(16,20,42,.7); }
+  .kpi b { display: block; font-family: var(--mono); font-size: 28px; line-height: 1; color: #fff; }
+  .kpi small { color: var(--ink-2); font-size: 12px; }
+  @media (max-width: 640px) { .kpi { grid-template-columns: 1fr 1fr; } }
+  .tablewrap { overflow-x: auto; }
+</style>
+<script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
+<script defer src="/_vercel/insights/script.js"></script>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <filter id="wobble" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="0.012" numOctaves="2" seed="7" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="7" xChannelSelector="R" yChannelSelector="G"/></filter>
+</defs></svg>
+<div class="sky" aria-hidden="true"><div class="nebula"></div><canvas></canvas><div class="vignette"></div></div>
+
+<header class="wrap top">
+  <a class="wordmark" href="/">Hack<em>Day</em></a>
+  <span class="where">admin</span>
+  <span class="who" id="who" hidden><span>Organiser</span><button class="btn btn-sm" type="button" onclick="BH.logout()">Sign out</button></span>
+</header>
+
+<main class="wrap">
+  <section id="login" class="login" hidden>
+    <span class="eyebrow">Organisers</span>
+    <h1 class="h-hand">Admin <em>code.</em></h1>
+    <form class="card login-form" style="margin-top:44px" autocomplete="off">
+      <div class="field"><label for="code">Admin code</label><input id="code" class="code" type="password" autocapitalize="characters" spellcheck="false" maxlength="9" placeholder="XXXX-XXXX" required></div>
+      <div class="row end" style="margin-top:16px"><button class="btn btn-primary" type="submit">Sign in</button></div>
+      <p class="msg" role="alert"></p>
+    </form>
+  </section>
+
+  <section id="wrongkind" class="login" hidden>
+    <h1 class="h-hand">Not an <em>admin</em> code.</h1>
+    <div class="row" style="margin-top:24px"><button class="btn" type="button" onclick="BH.logout()">Sign out</button></div>
+  </section>
+
+  <section id="admin" hidden>
+    <span class="eyebrow">Organisers</span>
+    <h1 class="h-hand">Run the <em>day.</em></h1>
+    <div class="strip" id="strip"><span><span class="dot"></span><span id="strip-text"></span></span><span class="saved" id="saved">&nbsp;</span></div>
+    <div class="kpi" id="kpi"></div>
+    <div class="tabs" id="tabs"><button class="on" data-tab="teams">Teams</button><button data-tab="results">Results</button><button data-tab="judges">Judges</button><button data-tab="settings">Settings</button><button data-tab="import">Add a team</button></div>
+
+    <!-- Teams -->
+    <div data-pane="teams">
+      <div class="row" style="justify-content: space-between; margin-bottom: 16px"><span class="caption">Teams register themselves on the day. A team that lost its code can read it here.</span>
+        <span class="row"><a class="btn btn-sm" href="/pitch?all=1" target="_blank" rel="noopener">All answers</a><button class="btn btn-sm" type="button" id="export">Export CSV</button></span></div>
+      <div class="tablewrap"><table class="grid codes" id="teams-table"></table></div>
+    </div>
+
+    <!-- Results -->
+    <div data-pane="results" hidden>
+      <p class="caption" style="margin-bottom: 16px">Ranked by average total out of 20. A judge's marks count once all four criteria are marked.</p>
+      <div class="tablewrap"><table class="grid" id="results-table"></table></div>
+    </div>
+
+    <!-- Import -->
+    <div data-pane="import" hidden>
+      <form class="card" id="import-form" autocomplete="off">
+        <h2>Add <em>teams.</em></h2>
+        <p class="sub">For a team that cannot register itself. One person per line: <span class="mono">team, name, school, email</span>. Two lines with the same team label become one team, with one team code.</p>
+        <div class="field" style="margin-top:16px"><label for="raw">People</label><p class="hint">Example:<br><span class="mono">1, Ada Lovelace, Northside High, ada@example.com<br>1, Alan Turing, Northside High, alan@example.com<br>2, Grace Hopper, Westfield Grammar, grace@example.com</span></p><textarea id="raw" class="raw" placeholder="team, name, school, email"></textarea></div>
+        <div class="row" style="margin-top:16px; justify-content: space-between"><span class="caption" id="import-preview"></span><button class="btn btn-primary" type="submit">Import and make codes</button></div>
+        <p class="msg" id="import-msg"></p>
+      </form>
+      <div class="card" id="import-result" hidden><h2>New <em>codes.</em></h2><p class="sub">Also listed under Teams. Give each team its code.</p><div class="tablewrap" style="margin-top:14px"><table class="grid codes" id="import-table"></table></div></div>
+    </div>
+
+    <!-- Judges -->
+    <div data-pane="judges" hidden>
+      <form class="card" id="judge-form" autocomplete="off">
+        <h2>Add a <em>judge.</em></h2>
+        <p class="sub">Every judge sees every team. Each judge gets their own code.</p>
+        <div class="fields"><div class="field"><label for="j-name">Name</label><input id="j-name" maxlength="80" required></div></div>
+        <div class="row end" style="margin-top:16px"><button class="btn btn-primary" type="submit">Add judge and make a code</button></div>
+        <p class="msg" id="judge-msg"></p>
+      </form>
+      <div class="tablewrap" style="margin-top:34px"><table class="grid codes" id="judges-table"></table></div>
+    </div>
+
+    <!-- Settings -->
+    <div data-pane="settings" hidden>
+      <form class="card" id="settings-form" autocomplete="off">
+        <h2>The <em>window.</em></h2>
+        <p class="sub">Teams can register and edit between open and lock. Force overrides the clock, for testing or if the day runs late.</p>
+        <div class="fields two">
+          <div class="field"><label for="opens">Opens (your local time)</label><input id="opens" type="datetime-local"></div>
+          <div class="field"><label for="locks">Locks (your local time)</label><input id="locks" type="datetime-local"></div>
+        </div>
+        <div class="field" style="margin-top:18px"><label>Force</label><p class="hint">Clock: follow the times above. Others override until you switch back.</p>
+          <div class="force" id="force"><button class="btn btn-sm" type="button" data-force="">Clock</button><button class="btn btn-sm" type="button" data-force="before">Force locked (before)</button><button class="btn btn-sm" type="button" data-force="open">Force open</button><button class="btn btn-sm" type="button" data-force="locked">Force locked (after)</button></div></div>
+        <div class="field" style="margin-top:18px"><label for="join">Event code</label><p class="hint">Teams need this to register. Put it on the screen at the briefing. Case and spacing do not matter. Empty means nobody can register.</p><input id="join" maxlength="40"></div>
+        <div class="field" style="margin-top:18px"><label for="prompt">AI prompt for the demo video</label><p class="hint">Shown in every team's portal with a Copy button. Empty hides the card.</p><textarea id="prompt" class="raw" maxlength="8000" style="min-height:200px"></textarea></div>
+        <div class="row end" style="margin-top:16px"><button class="btn btn-primary" type="submit">Save settings</button></div>
+        <p class="msg" id="settings-msg"></p>
+      </form>
+    </div>
+  </section>
+</main>
+<footer class="foot">HackDay 2026 · admin</footer>
+
+<script src="/assets/portal.js"></script>
+<script>
+(function () {
+  var $ = function (s) { return document.querySelector(s); };
+  var data = null;
+  function show(id) { ['login', 'wrongkind', 'admin'].forEach(function (k) { $('#' + k).hidden = k !== id; }); }
+  function saved(cls, t) { var el = $('#saved'); el.className = 'saved ' + cls; el.textContent = t; }
+  function toLocal(iso) { var d = new Date(iso); var p = function (n) { return String(n).padStart(2, '0'); }; return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + 'T' + p(d.getHours()) + ':' + p(d.getMinutes()); }
+
+  function render(d) {
+    data = d; $('#who').hidden = false;
+    var st = d.state, ph = BH.phase(st); $('#strip').className = 'strip ' + ph.cls; $('#strip-text').innerHTML = ph.text + (st.force ? ' · <b>forced</b>' : '');
+    var answered = d.teams.filter(function (t) { return t.app_name; }).length, videos = d.teams.filter(function (t) { return t.video_url; }).length;
+    $('#kpi').innerHTML = '<div><b>' + d.teams.length + '</b><small>teams</small></div><div><b>' + d.members.length + '</b><small>people</small></div><div><b>' + answered + '</b><small>with answers</small></div><div><b>' + videos + '</b><small>with a video</small></div>';
+    // teams table
+    var byTeam = {}; d.members.forEach(function (m) { (byTeam[m.team_id] = byTeam[m.team_id] || []).push(m); });
+    $('#teams-table').innerHTML = '<tr><th>Team and code</th><th>People</th><th>Answers</th><th>Links</th><th>Scores</th><th></th></tr>' + (d.teams.length ? d.teams.map(function (t) {
+      var ms = (byTeam[t.id] || []).map(function (m) { return '<div>' + BH.esc(m.name) + ' <span class="caption">' + BH.esc(m.school || '') + '</span>' + (m.code ? '<br><span class="mono">' + BH.esc(m.code) + '</span>' : '') + '</div>'; }).join('');
+      return '<tr><td><b>' + BH.esc(t.name || '') + '</b>' + (t.name ? '' : '<span class="caption">unnamed</span>') + (t.code ? '<br><span class="mono">' + BH.esc(t.code) + '</span>' : '') + '<br><span class="caption">#' + t.id + '</span></td><td class="stack">' + ms + '</td>' +
+        '<td>' + (t.app_name ? '<b>' + BH.esc(t.app_name) + '</b><br><span class="caption">' + BH.esc(t.tagline || '') + '</span>' : '<span class="caption">empty</span>') + (t.pitch_updated ? '<br><span class="caption">' + BH.fmt(t.pitch_updated) + '</span>' : '') + '<br><a class="caption" href="/pitch?team=' + t.id + '" target="_blank" rel="noopener">answers</a></td>' +
+        '<td>' + (t.site_url ? '<a href="' + BH.esc(BH.href(t.site_url)) + '" target="_blank" rel="noopener">site</a>' : '<span class="caption">no site</span>') + '<br>' + (t.video_url ? '<a href="' + BH.esc(BH.href(t.video_url)) + '" target="_blank" rel="noopener">video</a>' : '<span class="caption">no video</span>') + '</td>' +
+        '<td>' + (t.score_count ? '<b>' + (t.avg_score == null ? '-' : t.avg_score) + '</b> / 20 <span class="caption">avg of ' + t.score_count + '</span>' : '<span class="caption">none</span>') + '</td>' +
+        '<td><button class="btn btn-sm btn-danger" type="button" data-del-team="' + t.id + '">Delete</button></td></tr>';
+    }).join('') : '<tr><td colspan="6" class="caption">No teams yet. Teams appear here as they register.</td></tr>');
+    // results
+    var ranked = d.teams.filter(function (t) { return t.avg_score != null; }).sort(function (a, b) { return b.avg_score - a.avg_score; });
+    var unscored = d.teams.length - ranked.length;
+    $('#results-table').innerHTML = '<tr><th>#</th><th>Team</th><th>App</th><th>Average</th><th>Judges</th><th>Video</th></tr>' + (ranked.length ? ranked.map(function (t, i) {
+      return '<tr><td class="mono">' + (i + 1) + '</td><td><b>' + BH.esc(t.name || 'Unnamed team') + '</b></td><td>' + BH.esc(t.app_name || '') + '</td><td><b>' + t.avg_score + '</b> / 20</td><td>' + t.score_count + '</td><td>' + (t.video_url ? '<a href="' + BH.esc(BH.href(t.video_url)) + '" target="_blank" rel="noopener">video</a>' : '') + '</td></tr>';
+    }).join('') : '<tr><td colspan="6" class="caption">No complete marks yet.</td></tr>') + (unscored && ranked.length ? '<tr><td colspan="6" class="caption">' + unscored + ' team' + (unscored === 1 ? '' : 's') + ' not fully marked yet.</td></tr>' : '');
+    // judges
+    $('#judges-table').innerHTML = '<tr><th>Judge</th><th>Code</th><th>Scored</th><th></th></tr>' + (d.judges.length ? d.judges.map(function (j) { return '<tr><td><b>' + BH.esc(j.name) + '</b></td><td><span class="mono">' + BH.esc(j.code) + '</span></td><td>' + j.scored + ' / ' + d.teams.length + '</td><td><button class="btn btn-sm btn-danger" type="button" data-del-judge="' + j.id + '">Delete</button></td></tr>'; }).join('') : '<tr><td colspan="4" class="caption">No judges yet.</td></tr>');
+    // settings: leave the text boxes alone while the organiser is typing in them
+    $('#opens').value = toLocal(st.opens_at); $('#locks').value = toLocal(st.locks_at);
+    if (document.activeElement !== $('#join')) $('#join').value = d.settings.join_code || '';
+    if (document.activeElement !== $('#prompt')) $('#prompt').value = d.settings.codex_prompt || '';
+    document.querySelectorAll('[data-force]').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-force') === st.force); });
+    show('admin');
+  }
+  async function load() {
+    try { var me = await BH.api('GET', 'me'); if (me.kind !== 'admin') { $('#who').hidden = false; show('wrongkind'); return; } render(await BH.api('GET', 'admin/overview')); }
+    catch (e) { show('login'); }
+  }
+  async function refresh() { try { render(await BH.api('GET', 'admin/overview')); } catch (e) { saved('err', e.message); } }
+
+  $('#tabs').addEventListener('click', function (e) { var b = e.target.closest('[data-tab]'); if (!b) return; document.querySelectorAll('[data-tab]').forEach(function (x) { x.classList.toggle('on', x === b); }); document.querySelectorAll('[data-pane]').forEach(function (p) { p.hidden = p.getAttribute('data-pane') !== b.getAttribute('data-tab'); }); });
+
+  function parseRows(raw) {
+    return raw.split(/\r?\n/).map(function (l) { return l.trim(); }).filter(Boolean).map(function (l) {
+      var c = l.split(/\t|,/).map(function (x) { return x.trim(); });
+      return { team: c[0] || '', name: c[1] || '', school: c[2] || '', email: c[3] || '' };
+    }).filter(function (r) { return r.name; });
+  }
+  $('#raw').addEventListener('input', function () { var rows = parseRows($('#raw').value), teams = {}; rows.forEach(function (r) { teams[r.team || Math.random()] = 1; }); $('#import-preview').textContent = rows.length ? rows.length + ' people in ' + Object.keys(teams).length + ' teams' : ''; });
+  $('#import-form').addEventListener('submit', async function (e) {
+    e.preventDefault(); $('#import-msg').textContent = ''; var rows = parseRows($('#raw').value);
+    if (!rows.length) { $('#import-msg').textContent = 'Nothing to import.'; return; }
+    try {
+      var r = await BH.api('POST', 'admin/import', { rows: rows });
+      $('#import-result').hidden = false;
+      $('#import-table').innerHTML = '<tr><th>Team</th><th>Name</th><th>Code</th></tr>' + r.created.map(function (c) { return '<tr><td>#' + c.team_id + '</td><td>' + BH.esc(c.name) + '</td><td><span class="mono">' + BH.esc(c.code) + '</span></td></tr>'; }).join('');
+      $('#raw').value = ''; $('#import-preview').textContent = ''; await refresh(); saved('ok', 'Imported ' + r.created.length + ' people into ' + r.teams + ' teams');
+    } catch (err) { $('#import-msg').textContent = err.message; }
+  });
+  $('#judge-form').addEventListener('submit', async function (e) {
+    e.preventDefault(); $('#judge-msg').textContent = '';
+    try { await BH.api('POST', 'admin/judge', { name: $('#j-name').value }); $('#j-name').value = ''; await refresh(); saved('ok', 'Judge added'); }
+    catch (err) { $('#judge-msg').textContent = err.message; }
+  });
+  $('#settings-form').addEventListener('submit', async function (e) {
+    e.preventDefault(); $('#settings-msg').textContent = '';
+    try {
+      await BH.api('PUT', 'admin/settings', { opens_at: new Date($('#opens').value).toISOString(), locks_at: new Date($('#locks').value).toISOString(), join_code: $('#join').value, codex_prompt: $('#prompt').value });
+      await refresh(); saved('ok', 'Settings saved');
+    } catch (err) { $('#settings-msg').textContent = err.message; }
+  });
+  $('#force').addEventListener('click', async function (e) { var b = e.target.closest('[data-force]'); if (!b) return; try { await BH.api('PUT', 'admin/settings', { force: b.getAttribute('data-force') }); await refresh(); saved('ok', 'Window updated'); } catch (err) { $('#settings-msg').textContent = err.message; } });
+  document.addEventListener('click', async function (e) {
+    var t = e.target.closest('[data-del-team]'), j = e.target.closest('[data-del-judge]');
+    if (t) { if (!confirm('Delete this team, its people, pitch and scores?')) return; await BH.api('DELETE', 'admin/team?id=' + t.getAttribute('data-del-team')); await refresh(); }
+    if (j) { if (!confirm('Delete this judge and their scores?')) return; await BH.api('DELETE', 'admin/judge?id=' + j.getAttribute('data-del-judge')); await refresh(); }
+  });
+  $('#export').addEventListener('click', async function () {
+    var r = await fetch('/api/admin/export', { credentials: 'same-origin' }); var blob = await r.blob(); var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'teams.csv'; a.click();
+  });
+
+  BH.login($('.login-form'), load, 'admin');
+  load();
+})();
+</script>
+</body>
+</html>

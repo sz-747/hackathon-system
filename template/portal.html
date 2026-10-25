@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0d1b">
+<title>Team portal · HackDay 2026</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Caveat:wght@500;600&display=swap">
+<link rel="stylesheet" href="/assets/portal.css">
+<script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
+<script defer src="/_vercel/insights/script.js"></script>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <filter id="wobble" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="0.012" numOctaves="2" seed="7" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="7" xChannelSelector="R" yChannelSelector="G"/></filter>
+</defs></svg>
+<div class="sky" aria-hidden="true"><div class="nebula"></div><canvas></canvas><div class="vignette"></div></div>
+
+<header class="wrap top">
+  <a class="wordmark" href="/">Hack<em>Day</em></a>
+  <span class="where">team portal</span>
+  <span class="who" id="who" hidden><span id="who-name"></span><button class="btn btn-sm" type="button" onclick="BH.logout()">Sign out</button></span>
+</header>
+
+<main class="wrap">
+  <!-- Sign in -->
+  <section id="login" class="login" hidden>
+    <span class="eyebrow">Team portal</span>
+    <h1 class="h-hand">Find your <em>team.</em></h1>
+    <p class="lead" style="margin-top:14px">Enter your team code. Everyone in the team uses the same one.</p>
+    <form class="card login-form" style="margin-top:44px" autocomplete="off">
+      <div class="field"><label for="code">Team code</label><p class="hint">Eight letters and numbers, like <span class="mono">AB3D-EF6H</span>. Whoever registered your team has it.</p>
+        <input id="code" class="code" type="text" inputmode="latin" autocapitalize="characters" spellcheck="false" maxlength="9" placeholder="XXXX-XXXX" required></div>
+      <div class="row end" style="margin-top:16px"><button class="btn btn-primary" type="submit">Open our team</button></div>
+      <p class="msg" role="alert"></p>
+    </form>
+    <p class="lead" style="margin-top:48px">New team? One person registers for everyone.</p>
+    <div class="row" style="margin-top:14px"><button class="btn" type="button" id="to-register">Register a new team</button></div>
+    <p class="caption" style="margin-top:40px">Lost your code? Ask an organiser in the room.</p>
+  </section>
+
+  <!-- Register a team -->
+  <section id="register" class="login" hidden>
+    <span class="eyebrow">Team portal</span>
+    <h1 class="h-hand">Register your <em>team.</em></h1>
+    <p class="lead" style="margin-top:14px">One person does this for the whole team of 2 to 4. You get a team code to share with your teammates.</p>
+    <form class="card" id="register-form" style="margin-top:44px" autocomplete="off">
+      <div class="fields" style="margin-top:0">
+        <div class="field"><label for="reg-join">Event code</label><p class="hint">On the screen at the briefing.</p><input id="reg-join" maxlength="40" required></div>
+        <div class="field"><label for="reg-name">Team name</label><p class="hint">Short and memorable. Judges see it beside your video.</p><input id="reg-name" maxlength="60" placeholder="e.g. Night Owls" required></div>
+        <div class="field"><label>Who's in the team</label><p class="hint">2 to 4 people. Full name and school.</p><div class="people" id="reg-people"></div></div>
+      </div>
+      <div class="row end" style="margin-top:20px"><button class="btn btn-primary" type="submit">Register team</button></div>
+      <p class="msg" role="alert" id="register-msg"></p>
+    </form>
+    <p class="caption" style="margin-top:40px"><a href="#" id="to-login">We already have a team code</a></p>
+  </section>
+
+  <!-- Wrong kind of code -->
+  <section id="wrongkind" class="login" hidden>
+    <h1 class="h-hand">Not a <em>team</em> code.</h1>
+    <p class="lead" style="margin-top:14px" id="wrongkind-text"></p>
+    <div class="row" style="margin-top:24px"><button class="btn btn-primary" id="wrongkind-link" type="button" data-href="/judge" onclick="BH.switchTo(this.getAttribute('data-href'))">Sign out and go there</button><button class="btn" type="button" onclick="BH.logout()">Sign out</button></div>
+  </section>
+
+  <!-- The box -->
+  <section id="box" hidden>
+    <span class="eyebrow">Your team</span>
+    <h1 class="h-hand" id="title">Your <em>team.</em></h1>
+    <div class="strip" id="strip"><span><span class="dot"></span><span id="strip-text"></span></span><span class="saved" id="saved">&nbsp;</span></div>
+
+    <div class="codebox" id="codebox" hidden>
+      <div><span class="eyebrow" id="codebox-head">Team code</span><b class="mono" id="team-code"></b></div>
+      <p id="codebox-text">Share it with your teammates so they can sign in. Anyone with it can edit your team.</p>
+      <button class="btn btn-sm" type="button" id="copy-code">Copy</button>
+    </div>
+
+    <form class="card" id="team-form" autocomplete="off">
+      <h2>Your <em>team.</em></h2>
+      <p class="sub">2 to 4 people. Fix a name or add a late teammate here.</p>
+      <div class="fields">
+        <div class="field"><label for="team-name">Team name</label><p class="hint">Short and memorable. Judges see it beside your video.</p><input id="team-name" name="name" maxlength="60" placeholder="e.g. Night Owls"></div>
+        <div class="field"><label>Who's in the team</label><div class="people" id="team-people"></div></div>
+      </div>
+      <div class="row" style="margin-top:20px; justify-content: space-between"><span class="caption" id="team-saved"></span><button class="btn btn-primary" type="submit" id="team-save">Save team</button></div>
+      <p class="msg" id="team-msg"></p>
+    </form>
+
+    <form class="card" id="pitch-form" autocomplete="off">
+      <h2>Answer the judges' <em>questions.</em></h2>
+      <p class="sub">Judges read these beside your demo video. Fill them in once, then refine through the day. Saves as you type.</p>
+      <div class="fields">
+        <div class="fields two">
+          <div class="field"><label for="f-app_name">App name</label><p class="hint">The name of your product, shown at the top of your page in the judge portal.</p><input id="f-app_name" name="app_name" maxlength="80"></div>
+          <div class="field"><label for="f-tagline">Tagline</label><p class="hint">One line that captures what it does. Think of the line that sits under a logo.</p><input id="f-tagline" name="tagline" maxlength="160"></div>
+        </div>
+        <div class="field"><label for="f-audience">Who it's for</label><p class="hint">Who actually uses this. Name specific groups, not just the industry or organisation.</p><textarea id="f-audience" name="audience" maxlength="600" style="min-height:70px"></textarea></div>
+        <div class="fields two">
+          <div class="field"><label for="f-problem">The problem</label><p class="hint">Fragmented information, stale data, hard to manage.</p><textarea id="f-problem" name="problem" maxlength="1200"></textarea></div>
+          <div class="field"><label for="f-solution">The solution</label><p class="hint">What you are building and how it addresses the problem.</p><textarea id="f-solution" name="solution" maxlength="1200"></textarea></div>
+        </div>
+        <div class="field"><label for="f-mission">Mission statement</label><p class="hint">Why this matters in a sentence or two, the change you want to create.</p><textarea id="f-mission" name="mission" maxlength="600" style="min-height:70px"></textarea></div>
+        <div class="field"><label for="f-value">Value / impact</label><p class="hint">What gets better, for whom, and by roughly how much.</p><textarea id="f-value" name="value" maxlength="800" style="min-height:80px"></textarea></div>
+      </div>
+      <p class="msg" id="pitch-msg"></p>
+    </form>
+
+    <form class="card" id="links-form" autocomplete="off">
+      <h2>Submit your <em>links.</em></h2>
+      <p class="sub">Paste your site link and your 3-minute demo video. Judges watch the video with your answers beside it.</p>
+      <div class="videoprompt" id="video-prompt" hidden>
+        <div><b>Let AI edit your demo video</b><p class="hint">Film your demo once, then copy this prompt and paste it into your AI coding tool. It shows you a few video styles to pick from, then edits it into a 3-minute demo for you.</p></div>
+        <button class="btn btn-primary btn-sm" type="button" id="copy-prompt">Copy video prompt</button>
+      </div>
+      <div class="fields two">
+        <div class="field"><label for="f-site_url">Site link</label><p class="hint">A public link to your site, for example a Vercel production link. Judges must be able to open it without logging in, so on Vercel use the production link, not a preview. Check it in a private window.</p><input id="f-site_url" name="site_url" maxlength="400" placeholder="https://" inputmode="url"></div>
+        <div class="field"><label for="f-video_url">Demo video</label><p class="hint">YouTube (unlisted is fine), Vimeo or a shared Google Drive link. 3 minutes.</p><input id="f-video_url" name="video_url" maxlength="400" placeholder="https://" inputmode="url"></div>
+      </div>
+      <div class="row" style="margin-top:22px; justify-content: space-between">
+        <span class="caption" id="updated"></span>
+        <a class="btn" id="preview" href="/pitch" target="_blank" rel="noopener">Preview what judges read</a>
+      </div>
+      <p class="msg" id="links-msg"></p>
+    </form>
+  </section>
+</main>
+<footer class="foot">HackDay 2026</footer>
+
+<script src="/assets/portal.js"></script>
+<script>
+(function () {
+  var $ = function (s) { return document.querySelector(s); };
+  var data = null, saveTimers = {}, justRegistered = false, MIN = 2, MAX = 4;
+
+  var codexPrompt = ''; // set by the admin; copied, not shown
+  function show(id) { ['login', 'register', 'wrongkind', 'box'].forEach(function (k) { $('#' + k).hidden = k !== id; }); window.scrollTo(0, 0); }
+  function saved(cls, text) { var el = $('#saved'); el.className = 'saved ' + cls; el.textContent = text; }
+  function setTitle(name) { $('#title').innerHTML = name ? BH.esc(name) + ' <em>&#10003;</em>' : 'Your <em>team.</em>'; }
+  function copy(text, btn) {
+    var done = function () { var t = btn.textContent; btn.textContent = 'Copied'; setTimeout(function () { btn.textContent = t; }, 1500); };
+    if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, function () {}); else done();
+  }
+
+  // The 2-4 person editor, used by registration and the team card. Rows keep their member id.
+  function people(box, list) {
+    var rows = list.length ? list : [{}, {}];
+    box.innerHTML = rows.map(row).join('') + '<button class="btn btn-sm add" type="button">+ Add a teammate</button>';
+    sync(box);
+  }
+  function row(m) {
+    return '<div class="person"' + (m.id ? ' data-id="' + m.id + '"' : '') + '><input data-k="name" maxlength="80" placeholder="Full name" aria-label="Full name" value="' + BH.esc(m.name || '') + '">' +
+      '<input data-k="school" maxlength="80" placeholder="School" aria-label="School" value="' + BH.esc(m.school || '') + '">' +
+      '<button class="rm" type="button" aria-label="Remove this person">&times;</button></div>';
+  }
+  function sync(box) {
+    var n = box.querySelectorAll('.person').length, off = box.hasAttribute('data-off');
+    box.querySelectorAll('.rm').forEach(function (b) { b.disabled = off || n <= MIN; });
+    box.querySelector('.add').disabled = off || n >= MAX;
+  }
+  function collect(box) {
+    return Array.prototype.map.call(box.querySelectorAll('.person'), function (p) {
+      return { id: Number(p.getAttribute('data-id')) || undefined, name: p.querySelector('[data-k=name]').value, school: p.querySelector('[data-k=school]').value };
+    });
+  }
+  document.querySelectorAll('.people').forEach(function (box) {
+    box.addEventListener('click', function (e) {
+      if (e.target.closest('.add')) { e.target.closest('.add').insertAdjacentHTML('beforebegin', row({})); sync(box); box.dispatchEvent(new Event('input', { bubbles: true })); }
+      var rm = e.target.closest('.rm'); if (rm) { rm.parentNode.remove(); sync(box); box.dispatchEvent(new Event('input', { bubbles: true })); }
+    });
+  });
+
+  function render(d) {
+    data = d; var st = d.state, open = st.phase === 'open';
+    $('#who').hidden = false; var me = d.members.filter(function (m) { return m.id === d.me; })[0];
+    $('#who-name').textContent = me ? me.name : (d.team.name || '');
+    setTitle(d.team.name);
+    var ph = BH.phase(st); $('#strip').className = 'strip ' + ph.cls; $('#strip-text').innerHTML = ph.text;
+    // team code: loud straight after registering, quiet after that
+    $('#codebox').hidden = !d.team.code; $('#team-code').textContent = d.team.code || '';
+    $('#codebox').classList.toggle('fresh', justRegistered);
+    $('#codebox-head').textContent = justRegistered ? 'Registered. Your team code' : 'Team code';
+    // team card
+    $('#team-name').value = d.team.name || '';
+    var tp = $('#team-people'); tp.toggleAttribute('data-off', !open); people(tp, d.members);
+    $('#team-saved').textContent = ''; $('#team-msg').textContent = '';
+    // codex prompt
+    codexPrompt = d.codex_prompt || ''; $('#video-prompt').hidden = !codexPrompt;
+    // pitch + links
+    var p = d.pitch || {};
+    ['app_name', 'tagline', 'audience', 'problem', 'solution', 'mission', 'value', 'site_url', 'video_url'].forEach(function (f) { $('#f-' + f).value = p[f] || ''; });
+    $('#updated').textContent = p.updated_at ? 'Last saved ' + BH.fmt(p.updated_at) : 'Nothing saved yet.';
+    $('#preview').href = '/pitch?team=' + d.team.id;
+    // lock state
+    document.querySelectorAll('#box input, #box textarea, #box select').forEach(function (el) { el.disabled = !open; });
+    $('#team-save').disabled = !open;
+    saved(open ? '' : 'err', open ? 'Answers and links autosave as you type' : (st.phase === 'before' ? 'Read only until the event starts' : 'Read only'));
+    show('box');
+  }
+
+  async function load() {
+    try {
+      var d = await BH.api('GET', 'me');
+      if (d.kind !== 'member') {
+        $('#wrongkind-text').textContent = d.kind === 'judge' ? 'This code opens the judge portal.' : 'This code opens the admin page.';
+        $('#wrongkind-link').setAttribute('data-href', d.kind === 'judge' ? '/judge' : '/admin'); $('#who').hidden = false; show('wrongkind'); return;
+      }
+      render(d);
+    } catch (e) { show('login'); }
+  }
+
+  function queue(key, fn) { clearTimeout(saveTimers[key]); saved('busy', 'Saving…'); saveTimers[key] = setTimeout(fn, 600); }
+  async function saveTeam() {
+    $('#team-msg').textContent = '';
+    try {
+      var r = await BH.api('PUT', 'team', { name: $('#team-name').value, members: collect($('#team-people')) });
+      data.team = r.team; data.members = r.members; setTitle(r.team.name); people($('#team-people'), r.members);
+      $('#team-saved').textContent = 'Saved ' + BH.time(new Date().toISOString());
+    } catch (e) { $('#team-msg').textContent = e.message; if (e.status === 423 && e.data && e.data.state) { data.state = e.data.state; render(data); } }
+  }
+  async function savePitch(field, msgSel) {
+    var body = {}; body[field] = $('#f-' + field).value;
+    try {
+      var r = await BH.api('PUT', 'pitch', body); data.pitch = r.pitch; $(msgSel).textContent = '';
+      $('#updated').textContent = 'Last saved ' + BH.fmt(r.pitch.updated_at); saved('ok', 'Saved ' + BH.time(r.pitch.updated_at));
+    } catch (e) { $(msgSel).textContent = e.message; saved('err', 'Not saved'); if (e.status === 423 && e.data && e.data.state) { data.state = e.data.state; render(data); } }
+  }
+
+  $('#team-form').addEventListener('input', function () { $('#team-saved').textContent = 'Unsaved changes'; });
+  $('#team-form').addEventListener('submit', function (e) { e.preventDefault(); saveTeam(); });
+  $('#pitch-form').addEventListener('input', function (e) { var f = e.target.name; if (f) queue('p:' + f, function () { savePitch(f, '#pitch-msg'); }); });
+  $('#links-form').addEventListener('input', function (e) { var f = e.target.name; if (f) queue('l:' + f, function () { savePitch(f, '#links-msg'); }); });
+  ['#pitch-form', '#links-form'].forEach(function (s) { $(s).addEventListener('submit', function (e) { e.preventDefault(); }); });
+  $('#copy-code').addEventListener('click', function () { copy($('#team-code').textContent, this); });
+  $('#copy-prompt').addEventListener('click', function () { copy(codexPrompt, this); });
+
+  // Registration
+  $('#to-register').addEventListener('click', function () { if (!$('#reg-people .person')) people($('#reg-people'), []); show('register'); });
+  $('#to-login').addEventListener('click', function (e) { e.preventDefault(); show('login'); });
+  $('#register-form').addEventListener('submit', async function (e) {
+    e.preventDefault(); var btn = this.querySelector('button[type=submit]'); $('#register-msg').textContent = ''; btn.disabled = true;
+    try {
+      await BH.api('POST', 'register', { join_code: $('#reg-join').value, name: $('#reg-name').value, members: collect($('#reg-people')) });
+      justRegistered = true; await load();
+    } catch (err) { $('#register-msg').textContent = err.message; }
+    btn.disabled = false;
+  });
+
+  BH.login($('.login-form'), load, 'member');
+  load();
+  // Re-check the window every minute so the page locks or opens itself on the day.
+  setInterval(function () { if (data) BH.api('GET', 'me').then(function (d) { if (d.state.phase !== data.state.phase) render(d); }).catch(function () {}); }, 60000);
+})();
+</script>
+</body>
+</html>

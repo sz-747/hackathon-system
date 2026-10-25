@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0d1b">
+<title>Judge portal · HackDay 2026</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Caveat:wght@500;600&display=swap">
+<link rel="stylesheet" href="/assets/portal.css">
+<script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
+<script defer src="/_vercel/insights/script.js"></script>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <filter id="wobble" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="0.012" numOctaves="2" seed="7" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="7" xChannelSelector="R" yChannelSelector="G"/></filter>
+</defs></svg>
+<div class="sky" aria-hidden="true"><div class="nebula"></div><canvas></canvas><div class="vignette"></div></div>
+
+<header class="wrap wide top">
+  <a class="wordmark" href="/">Hack<em>Day</em></a>
+  <span class="where">judge portal</span>
+  <span class="who" id="who" hidden><span id="who-name"></span><button class="btn btn-sm" type="button" onclick="BH.logout()">Sign out</button></span>
+</header>
+
+<main class="wrap wide">
+  <section id="login" class="login" hidden>
+    <span class="eyebrow">Judge portal</span>
+    <h1 class="h-hand">Welcome, <em>judge.</em></h1>
+    <p class="lead" style="margin-top:14px">Enter your judge code. You will see every team's video and answers.</p>
+    <form class="card login-form" style="margin-top:44px" autocomplete="off">
+      <div class="field"><label for="code">Judge code</label><p class="hint">Eight letters and numbers, from the organisers.</p>
+        <input id="code" class="code" type="text" autocapitalize="characters" spellcheck="false" maxlength="9" placeholder="XXXX-XXXX" required></div>
+      <div class="row end" style="margin-top:16px"><button class="btn btn-primary" type="submit">Open the judge portal</button></div>
+      <p class="msg" role="alert"></p>
+    </form>
+  </section>
+
+  <section id="wrongkind" class="login" hidden>
+    <h1 class="h-hand">Not a <em>judge</em> code.</h1>
+    <p class="lead" style="margin-top:14px" id="wrongkind-text"></p>
+    <div class="row" style="margin-top:24px"><button class="btn btn-primary" id="wrongkind-link" type="button" data-href="/portal" onclick="BH.switchTo(this.getAttribute('data-href'))">Sign out and go there</button><button class="btn" type="button" onclick="BH.logout()">Sign out</button></div>
+  </section>
+
+  <!-- Judging home: how it works, the criteria, start, and every team -->
+  <section id="list" hidden>
+    <span class="eyebrow">Judging</span>
+    <h1 class="h-hand">Ready to <em>judge?</em></h1>
+    <div class="strip" id="strip"><span><span class="dot"></span><span id="strip-text"></span></span><span class="saved" id="count"></span></div>
+    <details class="brief-wrap" id="brief" open>
+    <summary>How it works and what you're scoring</summary>
+    <div class="judge-home">
+      <div class="card brief">
+        <h2>How it <em>works.</em></h2>
+        <ol class="how">
+          <li><b>1</b><span>Each team has four cards: their answers, their site, their demo video, and the rubric. Flip them with the tabs or the arrow keys.</span></li>
+          <li><b>2</b><span>On the rubric card, click the sentence that fits best for each criterion, from 1 (poor) to 5 (outstanding), and add a note for the deliberation.</span></li>
+          <li><b>3</b><span>Press <i>Save</i>, or <i>Next team</i> to save and move on. Previous and Next at the top also move between teams, and keep your marks.</span></li>
+        </ol>
+        <div class="row" style="margin-top:20px"><button class="btn btn-primary" type="button" id="start">Start judging &rarr;</button></div>
+      </div>
+      <div class="card brief">
+        <h2>What you're <em>scoring.</em></h2>
+        <ol class="crit-list" id="crit-list"></ol>
+      </div>
+    </div>
+    </details>
+    <div class="list-head">
+      <h2 class="h-hand list-title">All <em>teams.</em></h2>
+      <div class="row sort" role="group" aria-label="Sort teams"><span class="caption">Sort by</span><button type="button" class="on" data-sort="order" aria-pressed="true">Team order</button><button type="button" data-sort="score" aria-pressed="false">Your score</button></div>
+    </div>
+    <div class="list" id="teams"></div>
+  </section>
+
+  <!-- One team: team navigation, three cards, marks -->
+  <section id="team" hidden>
+    <nav class="teambar" aria-label="Teams">
+      <button class="btn btn-sm" type="button" id="back">&larr; All teams</button>
+      <div class="row teambar-mid">
+        <button class="btn btn-sm" type="button" id="prev-team" aria-label="Previous team">&lsaquo; Previous</button>
+        <select id="jump" aria-label="Go to a team"></select>
+        <button class="btn btn-sm" type="button" id="next-team" aria-label="Next team">Next &rsaquo;</button>
+      </div>
+      <span class="caption" id="t-pos"></span>
+    </nav>
+    <span class="eyebrow" id="t-team"></span>
+    <h1 class="h-hand" id="t-app"></h1>
+    <p class="lead" id="t-tag" style="margin-top:8px"></p>
+
+    <div id="t-deck" class="judge-deck"></div>
+    <!-- The score form lives in the team's fourth card (Rubric); it waits here while the deck is rebuilt. -->
+    <div id="stash" hidden>
+      <form id="score-form" class="rubric-form" autocomplete="off">
+        <div class="rubric-head">
+          <div><h2 class="rubric-title">Score <em>this team.</em></h2><p class="sub">Click the sentence that fits best for each criterion. Only you and the organisers see your marks; moving to another team saves them.</p></div>
+          <p class="total" id="total"></p>
+        </div>
+        <div class="rubric" id="score"></div>
+        <div class="field" style="margin-top:18px"><label for="notes">Notes</label><p class="hint">A line or two for the deliberation. They show on this team's card on the judging page.</p><textarea id="notes" maxlength="2000"></textarea></div>
+        <p class="caption" id="score-saved" style="margin-top:8px"></p>
+        <p class="msg" id="score-msg"></p>
+      </form>
+    </div>
+  </section>
+</main>
+<footer class="foot">HackDay 2026</footer>
+
+<script src="/assets/portal.js"></script>
+<script>
+(function () {
+  var $ = function (s) { return document.querySelector(s); };
+  var data = null, current = null, marks = {}, dirty = false, sortBy = 'order';
+  function show(id) { ['login', 'wrongkind', 'list', 'team'].forEach(function (k) { $('#' + k).hidden = k !== id; }); window.scrollTo(0, 0); }
+
+  // Judging home: progress, how it works, the criteria, Start judging, and the index of teams.
+  function renderList(d, resort) {
+    data = d; $('#who').hidden = false; $('#who-name').textContent = d.judge.name;
+    var ph = BH.phase(d.state); $('#strip').className = 'strip ' + ph.cls; $('#strip-text').innerHTML = ph.text;
+    var done = d.teams.filter(function (t) { return t.score != null; }).length;
+    $('#count').textContent = d.teams.length ? done + ' of ' + d.teams.length + ' scored' : '';
+    $('#crit-list').innerHTML = BH.criteria.map(function (c, i) { return '<li><span class="crit-n">0' + (i + 1) + '</span><div><b>' + c[1] + '</b><p>' + c[2] + '</p></div></li>'; }).join('');
+    var start = $('#start'); start.disabled = !d.teams.length;
+    start.innerHTML = !d.teams.length ? 'No teams yet' : done === d.teams.length ? 'All scored. Review from the start &rarr;' : done ? 'Carry on judging &rarr;' : 'Start judging &rarr;';
+    // The briefing folds away once judging has started, so every team is visible near the top.
+    if (!resort) $('#brief').open = done === 0;
+    // One card per team, three across: what they built, your total out of 20, and your notes at the bottom.
+    var order = d.teams.map(function (t, i) { return { t: t, i: i }; });
+    if (sortBy === 'score') order.sort(function (a, b) { return (b.t.score == null ? -1 : b.t.score) - (a.t.score == null ? -1 : a.t.score) || a.i - b.i; });
+    $('#teams').innerHTML = d.teams.length ? order.map(function (o) {
+      var t = o.t, i = o.i;
+      var missing = [t.video_url ? '' : 'no video', t.site_url ? '' : 'no site'].filter(Boolean).join(' · ');
+      return '<button class="tcard" type="button" data-id="' + t.id + '">' +
+        '<span class="tc-top"><span class="tag">' + (i + 1) + '. ' + BH.esc(t.name || 'Unnamed team') + '</span>' +
+        '<span class="sc">' + (t.score != null ? '<b>' + t.score + '</b> / 20' : markedCount(t.criteria) ? markedCount(t.criteria) + ' of 4 marked' : 'not marked') + '</span></span>' +
+        '<b class="tc-app">' + BH.esc(t.app_name || 'Untitled') + '</b>' +
+        (t.tagline ? '<small>' + BH.esc(t.tagline) + '</small>' : '') + '<small>' + BH.esc(t.people || '') + '</small>' +
+        (missing ? '<small class="tc-missing">' + missing + '</small>' : '') +
+        '<span class="tc-notes">' + (t.notes ? BH.esc(t.notes) : '<span class="none">No notes yet.</span>') + '</span>' +
+        '</button>';
+    }).join('') : '<p class="lead">No teams yet.</p>';
+    if (!resort) show('list');
+  }
+
+  function indexOf(id) { return data.teams.findIndex(function (t) { return t.id === id; }); }
+  async function openTeam(id) {
+    var r = await BH.api('GET', 'pitch?team=' + id); var b = r.teams[0]; if (!b) return;
+    current = b; var p = b.pitch || {}, i = indexOf(id), row = data.teams[i] || {}, n = data.teams.length;
+    $('#t-team').textContent = b.team.name || 'Unnamed team';
+    $('#t-pos').textContent = 'Team ' + (i + 1) + ' of ' + n;
+    $('#t-app').innerHTML = p.app_name ? BH.esc(p.app_name) : 'Untitled <em>project.</em>';
+    $('#t-tag').textContent = p.tagline || '';
+    var form = $('#score-form'); $('#stash').appendChild(form); // keep it (and its listeners) while the deck is replaced
+    // On the rubric card, Save and Next team (both submit the score form) take the place of Next card.
+    $('#t-deck').innerHTML = BH.deck(b, [{ label: 'Rubric', html: '<div class="rubric-slot"></div>' }],
+      '<button class="btn btn-sm" type="submit" form="score-form" data-then="stay">Save</button><button class="btn btn-primary btn-sm" type="submit" form="score-form" data-then="next">Next team &rarr;</button>');
+    $('#t-deck .rubric-slot').appendChild(form);
+    $('#prev-team').disabled = n < 2; $('#next-team').disabled = n < 2;
+    $('#jump').innerHTML = data.teams.map(function (t, k) { return '<option value="' + t.id + '"' + (t.id === id ? ' selected' : '') + '>' + (k + 1) + '. ' + BH.esc(t.name || 'Unnamed team') + (t.score != null ? ' ✓' : '') + '</option>'; }).join('');
+    marks = Object.assign({}, row.criteria || {}); $('#notes').value = row.notes || ''; dirty = false; renderScore(); $('#score-saved').textContent = ''; $('#score-msg').textContent = '';
+    show('team');
+  }
+  async function save() {
+    await BH.api('PUT', 'score', { team_id: current.team.id, criteria: marks, notes: $('#notes').value });
+    dirty = false; $('#score-saved').textContent = 'Saved ' + BH.time(new Date().toISOString());
+    data = await BH.api('GET', 'me');
+  }
+  // Moving to another team keeps unsaved marks: save first, then go.
+  async function goTo(id) {
+    try { if (dirty) await save(); await openTeam(id); } catch (err) { $('#score-msg').textContent = err.message; }
+  }
+  function step(by) { var n = data.teams.length, i = indexOf(current.team.id); goTo(data.teams[((i + by) % n + n) % n].id); }
+  function markedCount(c) { return c ? BH.criteria.filter(function (k) { return c[k[0]]; }).length : 0; }
+  function renderScore() {
+    // The rubric as a grid: criteria down the side, levels 1-5 across, a sentence in every cell.
+    $('#score').innerHTML = '<div class="rubric-row rubric-levels" aria-hidden="true"><span></span>' + BH.LEVELS.map(function (l, k) { return '<span><b>' + (k + 1) + '</b> ' + l + '</span>'; }).join('') + '</div>' +
+      BH.criteria.map(function (c, i) {
+        var m = marks[c[0]];
+        return '<div class="rubric-row" role="radiogroup" aria-label="' + c[1] + '"><div class="rubric-crit"><span class="crit-n">0' + (i + 1) + '</span><b>' + c[1] + '</b><span class="crit-mark">' + (m ? m + ' / 5' : 'not marked') + '</span><p>' + c[2] + '</p></div>' +
+          c[3].map(function (text, k) { var n = k + 1, on = m === n;
+            return '<button type="button" role="radio" aria-checked="' + on + '" class="lvl' + (on ? ' on' : '') + '" data-k="' + c[0] + '" data-n="' + n + '"><b>' + n + '</b><span><i>' + BH.LEVELS[k] + '.</i> ' + BH.esc(text) + '</span></button>'; }).join('') + '</div>';
+      }).join('');
+    var n = markedCount(marks), sum = BH.criteria.reduce(function (a, c) { return a + (marks[c[0]] || 0); }, 0);
+    $('#total').innerHTML = n === 4 ? 'Total <b>' + sum + '</b> / 20' : n + ' of 4 criteria marked';
+  }
+
+  $('#score').addEventListener('click', function (e) { var b = e.target.closest('button[data-n]'); if (!b) return; marks[b.getAttribute('data-k')] = Number(b.getAttribute('data-n')); dirty = true; renderScore(); });
+  $('#notes').addEventListener('input', function () { dirty = true; });
+  $('#score-form').addEventListener('submit', async function (e) {
+    e.preventDefault(); $('#score-msg').textContent = '';
+    var next = e.submitter && e.submitter.getAttribute('data-then') === 'next';
+    try { await save(); } catch (err) { $('#score-msg').textContent = err.message; return; }
+    if (!next) return;
+    // Next team: the following team in order, wrapping round (marks were just saved).
+    var n = data.teams.length, i = indexOf(current.team.id);
+    goTo(data.teams[(i + 1) % n].id);
+  });
+  $('#start').addEventListener('click', function () {
+    var todo = data.teams.filter(function (t) { return t.score == null; })[0] || data.teams[0];
+    if (todo) goTo(todo.id);
+  });
+  document.querySelector('.sort').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-sort]'); if (!b) return; sortBy = b.getAttribute('data-sort');
+    this.querySelectorAll('[data-sort]').forEach(function (x) { var on = x === b; x.classList.toggle('on', on); x.setAttribute('aria-pressed', String(on)); });
+    renderList(data, true);
+  });
+  $('#teams').addEventListener('click', function (e) { var b = e.target.closest('[data-id]'); if (b) goTo(Number(b.getAttribute('data-id'))); });
+  $('#prev-team').addEventListener('click', function () { step(-1); });
+  $('#next-team').addEventListener('click', function () { step(1); });
+  $('#jump').addEventListener('change', function () { goTo(Number(this.value)); });
+  $('#back').addEventListener('click', async function () {
+    try { if (dirty) await save(); renderList(await BH.api('GET', 'me')); } catch (err) { $('#score-msg').textContent = err.message; }
+  });
+  BH.wireDecks($('#t-deck'));
+  // Left and right arrows flip the cards, unless the judge is typing a note.
+  document.addEventListener('keydown', function (e) {
+    if ($('#team').hidden || BH.typing(e)) return;
+    var d = $('#t-deck .deck'); if (!d) return;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') BH.deckStep(d, e.key === 'ArrowRight' ? 1 : -1);
+  });
+
+  async function load() {
+    try {
+      var d = await BH.api('GET', 'me');
+      if (d.kind !== 'judge') { $('#wrongkind-text').textContent = d.kind === 'member' ? 'This code opens the team portal.' : 'This code opens the admin page.'; $('#wrongkind-link').setAttribute('data-href', d.kind === 'member' ? '/portal' : '/admin'); $('#who').hidden = false; show('wrongkind'); return; }
+      renderList(d);
+    } catch (e) { show('login'); }
+  }
+  BH.login($('.login-form'), load, 'judge');
+  load();
+})();
+</script>
+</body>
+</html>
