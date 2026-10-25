@@ -1,0 +1,6 @@
+dev.js
+test
+.pglite
+.env*
+README.md
+vercel.preview.json
