@@ -1,0 +1,23 @@
+{
+  "name": "hackathon-portal",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Team portal, judge portal and admin for a one-day hackathon.",
+  "scripts": {
+    "dev": "node dev.js"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^1.1.0",
+    "@vercel/analytics": "^2.0.1",
+    "@vercel/functions": "3.9.11"
+  },
+  "overrides": {
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
