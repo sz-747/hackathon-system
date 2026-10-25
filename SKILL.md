@@ -40,6 +40,7 @@ and record the answers in the project. The example column is what BarkerHacks 20
 | Timings | Portal opens at the start, submissions lock before judging |
 | Helpers | A copyable AI prompt that edits the demo video for the team |
 | Several judges | Every judge scores every team; results rank by the average |
+| Sign-ups | An external form; events listed on Luma use `hackathon-luma` |
 
 ## Resources
 
@@ -47,6 +48,9 @@ and record the answers in the project. The example column is what BarkerHacks 20
 - [Portal build](references/portal.md): architecture, data model, API, flows, preview and deploy pattern,
   tests and security.
 - [Decision log](docs/working.md): dated decisions and lessons with their evidence. Read it before starting.
+- [`hackathon-luma`](skills/hackathon-luma/SKILL.md): companion skill for events that list on Luma. It connects
+  the official Luma MCP and keeps the Luma event (description, registration, guests, messages) in line with
+  the homepage.
 - [Starter portal](template/): working code for everything in the portal reference. Copy it and change the
   event settings listed in [`template/README.md`](template/README.md); that is the fastest path.
 

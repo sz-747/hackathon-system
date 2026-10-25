@@ -7,6 +7,7 @@ ChatGPT or any coding agent and it builds the software your event needs:
 - a **team portal** where teams register on the day and submit their project and demo video
 - a **judge portal** with a scoring rubric, every team side by side
 - an **admin page** to open and lock submissions, add judges and rank the results
+- your **Luma event page**, kept in sync through the official Luma MCP ([`hackathon-luma`](skills/hackathon-luma/SKILL.md))
 
 It comes with working starter code, first used at [BarkerHacks 2026](https://barkerhacks.org).
 
@@ -21,6 +22,9 @@ It comes with working starter code, first used at [BarkerHacks 2026](https://bar
 submissions, judging and results.
 
 **Does it work with Claude Code, Codex and ChatGPT?** Yes. `SKILL.md` is plain Markdown that any agent can read.
+
+**Does it work with Luma?** Yes. The companion skill connects the official Luma MCP and manages your event's
+description, registration questions, guests and messages, asking before every change.
 
 **What does it cost?** Nothing. It's MIT licensed, and the portal can run on the free tiers of Vercel and Neon.
 
